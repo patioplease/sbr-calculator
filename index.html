@@ -12,6 +12,7 @@
 @media (prefers-color-scheme:dark){:root{--bg:#0d1419;--card:#16212a;--ink:#e5edf2;--mut:#95a6b2;--line:#263540;
 --acc:#4fb3ec;--accs:#132c3d;--ok:#6fd49a;--okb:#14281d;--warn:#f0b35a;--warnb:#2e2414;--bad:#ff8a80;--badb:#33191a;--inp:#111b22}}
 *{box-sizing:border-box;min-width:0}
+html,body{overflow-x:hidden}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
 header{display:flex;align-items:center;gap:12px;padding:16px 16px 6px;max-width:640px;margin:0 auto}
 header img{width:40px;height:40px}
@@ -141,7 +142,7 @@ button{font:inherit}
     <div class="total" id="tot"></div>
     <div class="status" id="status"><b></b><span></span></div>
     <div class="next"><b>Next step</b><span id="action"></span></div>
-    <div class="btns"><button class="p" id="save">Save visit</button><button id="repbtn">Report</button><button id="copy">Copy</button></div>
+    <div class="btns"><button class="p" id="send" style="flex-basis:100%">Send to engineer</button><button id="save">Save visit</button><button id="repbtn">Report</button><button id="copy">Copy</button></div>
     <div class="note" id="savenote"></div>
   </div>
 </section>
@@ -470,6 +471,7 @@ function refreshSites(){$("sitelist").innerHTML=Object.keys(sites).sort().map(k=
 function onSite(fill){
  const n=siteName(),key=n?siteKey(n):null,date=$("vdate").value||today();
  state.site=n;state.vdate=date;save();
+ $("savenote").textContent="";$("savenote").style.color="";
  const note=$("sitenote");note.className="note";
  if(!key){note.textContent=n?"New site — it will be added when you save the visit.":"";drawHistory();return}
  const pv=prevVisit(key,date);
@@ -562,6 +564,23 @@ function reportText(){
   "\nMix "+fmt(r.H4,0)+" / aerate "+fmt(r.C73,0)+" / settle "+fmt(r.C55,0)+" / extract "+fmt(r.C46,0)+" = "+fmt(r.C79,0)+" min\nStatus: "+v[1]+" — "+r.C91+"\nNext step: "+r.C82+"\n\n"+rows.map(x=>x[0]+": "+x[1]).join("\n");
 }
 $("repbtn").addEventListener("click",openReport);
+function engineerText(){
+ const {I,r,v}=last,n=siteKey(siteName())||siteName();
+ return "SBR settings — "+n+" ("+fdate($("vdate").value||today())+")\n"+
+  "Tank: "+I.C4+" PE, "+I.C5+(I.C5==1?" person":" people")+"\n"+
+  "Air: "+r.C76+" on / "+r.C77+" off (every "+(r.C76+r.C77)+" min)\n"+
+  "Sugar: "+fmt(r.C70,0)+" mL as the air stops"+(r.C71>0?", then "+fmt(r.C71,0)+" mL staged":"")+"\n"+
+  "Cycle: mix "+fmt(r.H4,0)+" / aerate "+fmt(r.C73,0)+" / settle "+fmt(r.C55,0)+" / extract "+fmt(r.C46,0)+" = "+fmt(r.C79,0)+" min\n"+
+  "Status: "+v[1]+" — "+r.C91+"\n"+
+  "Next step: "+r.C82;
+}
+$("send").addEventListener("click",()=>{
+ if(!last)return;const note=$("savenote");
+ if(!siteName()){note.className="note";note.style.color="var(--bad)";note.textContent="Enter the site name at the top first.";$("site").scrollIntoView({block:"center"});$("site").focus();return}
+ note.style.color="";const t=engineerText();
+ if(navigator.share){navigator.share({title:"SBR settings — "+siteName(),text:t}).catch(()=>{});return}
+ copyText(t).then(ok=>{note.className="note ok";note.textContent=ok?"Copied — paste it into a message to the engineer.":"Couldn't copy on this device."});
+});
 function copyText(t){
  const fb=()=>{const a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand("copy")}catch(e){}a.remove();return ok};
  if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(t).then(()=>true,()=>fb());
