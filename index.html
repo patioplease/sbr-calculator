@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0f6e5c"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<title>SBR Aeration Calculator</title>
+<style>
+:root{--bg:#f3f5f4;--card:#fff;--ink:#17201c;--mut:#5d6b65;--line:#dde3e0;--acc:#0f6e5c;--accs:#e3f1ed;
+--ok:#1e7a46;--okb:#e4f4ea;--warn:#a05a00;--warnb:#fdf0dc;--bad:#b3261e;--badb:#fbe5e3;--inp:#f7f9f8}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1412;--card:#18201d;--ink:#e6ece9;--mut:#9aa8a2;--line:#2a3430;
+--acc:#5cc9ae;--accs:#183129;--ok:#6fd49a;--okb:#16291e;--warn:#f0b35a;--warnb:#2e2414;--bad:#ff8a80;--badb:#33191a;--inp:#121916}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+header{padding:16px 16px 4px}
+h1{font-size:19px;margin:0;letter-spacing:-.01em}
+.sub{color:var(--mut);font-size:13px;margin-top:2px}
+main{padding:8px 12px 40px;max-width:640px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:0 0 10px}
+.big{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--accs);border-radius:10px;padding:10px}
+.stat .l{font-size:12px;color:var(--mut)}
+.stat .v{font-size:26px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat .v small{font-size:14px;font-weight:600;color:var(--mut)}
+.stat .n{font-size:12px;color:var(--mut)}
+.phases{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px;text-align:center}
+.ph{border:1px solid var(--line);border-radius:9px;padding:6px 2px}
+.ph .v{font-weight:700;font-size:17px;font-variant-numeric:tabular-nums}
+.ph .l{font-size:11px;color:var(--mut)}
+.total{margin-top:8px;font-size:13px;color:var(--mut);text-align:right}
+.status{margin-top:12px;border-radius:10px;padding:10px 12px;font-weight:600;font-size:14px}
+.s-ok{background:var(--okb);color:var(--ok)}.s-warn{background:var(--warnb);color:var(--warn)}.s-bad{background:var(--badb);color:var(--bad)}
+.next{margin-top:10px;font-size:14px}
+.next b{display:block;font-size:12px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.alert{background:var(--warnb);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13.5px;margin-top:10px;font-weight:500}
+.f{display:grid;grid-template-columns:1fr 128px;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line)}
+.f:first-of-type{border-top:0}
+.f label{font-size:14px}
+.f label span{display:block;font-size:12px;color:var(--mut)}
+.f input,.f select{width:100%;font:inherit;font-size:16px;padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:var(--inp);color:var(--ink);text-align:right}
+.f select{text-align:left}
+.f.wide{grid-template-columns:1fr}
+.f input:focus,.f select:focus{outline:2px solid var(--acc);outline-offset:-1px}
+details.card>summary{cursor:pointer;list-style:none;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary::after{content:"▸";float:right;transition:transform .15s}
+details[open].card>summary::after{transform:rotate(90deg)}
+details.card[open]>summary{margin-bottom:10px}
+.r{padding:8px 0;border-top:1px solid var(--line)}
+.r:first-of-type{border-top:0}
+.r .k{font-size:12px;color:var(--mut)}
+.r .x{font-size:14px;font-variant-numeric:tabular-nums}
+.btns{display:flex;gap:8px;margin:14px 0}
+button{flex:1;font:inherit;font-weight:600;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+button.p{background:var(--acc);border-color:var(--acc);color:#fff}
+@media (prefers-color-scheme:dark){button.p{color:#06231c}}
+.foot{color:var(--mut);font-size:12px;text-align:center;margin-top:6px}
+</style>
+</head>
+<body>
+<header><h1>SBR Aeration Calculator</h1><div class="sub">GRAF One2Clean · aeration, sugar dosing &amp; sludge</div></header>
+<main>
+<section class="card" id="out">
+  <h2>Your settings</h2>
+  <div class="big">
+    <div class="stat"><div class="l">Aeration</div><div class="v" id="air"></div><div class="n" id="airn"></div></div>
+    <div class="stat"><div class="l">Sugar shot</div><div class="v" id="sugar"></div><div class="n" id="sugarn"></div></div>
+  </div>
+  <div class="phases">
+    <div class="ph"><div class="v" id="pMix"></div><div class="l">Mix</div></div>
+    <div class="ph"><div class="v" id="pAer"></div><div class="l">Aerate</div></div>
+    <div class="ph"><div class="v" id="pSet"></div><div class="l">Settle</div></div>
+    <div class="ph"><div class="v" id="pExt"></div><div class="l">Extract</div></div>
+  </div>
+  <div class="total" id="tot"></div>
+  <div class="alert" id="warn18" hidden>“Lowest DO after sugar shot” is blank, so it's treated as 0. That can wrongly allow the extra sugar dose. Fill it in (or the end-of-mixing DO) before trusting the dosing.</div>
+  <div class="status" id="status"></div>
+  <div class="next"><b>Next step</b><span id="action"></span></div>
+</section>
+
+<section class="card"><h2>Tank</h2><div id="g-tank"></div></section>
+<section class="card"><h2>Sludge survey</h2><div id="g-sludge"></div></section>
+<section class="card"><h2>Test results</h2><div id="g-tests"></div></section>
+
+<details class="card"><summary>Full report</summary><div id="report"></div></details>
+<details class="card"><summary>Optional readings</summary><div id="g-opt"></div></details>
+<details class="card"><summary>Advanced settings</summary><div id="g-adv"></div></details>
+
+<div class="btns"><button class="p" id="copy">Copy results</button><button id="reset">Reset to defaults</button></div>
+<div class="foot">Formulas match Final_Aeration_Cycle_Calulator v3. Inputs are saved on this phone.</div>
+</main>
+<script>
+// SBR Aeration Cycle Calculator engine — direct port of
+// "Final_Aeration_Cycle_Calulator_CGPT_X_Gemini_v3.xlsx", sheet "SBR Nutrient Calculator".
+// Inputs: object keyed by cell (C4..C51). null/undefined/"" = blank cell (Excel semantics).
+(function (root) {
+  var TANKS = [ // Inputs!A3:I8  PE, volume m3, water height m, length, width, max inflow, compressor L/min, source, extraction min
+    { pe: 5, vol: 3.75, h: 1.39, flow: 80, ext: 10 },
+    { pe: 7, vol: 4.8, h: 1.575, flow: 100, ext: 10 },
+    { pe: 9, vol: 6.5, h: 1.84, flow: 120, ext: 10 },
+    { pe: 12, vol: 8.5, h: 1.88, flow: 150, ext: 10 },
+    { pe: 19, vol: 13, h: 2.165, flow: 200, ext: 10 },
+    { pe: 70, vol: 48, h: 2.185, flow: 1380, ext: 10 }
+  ];
+  var COLOURS = [
+    "S01 – Dark brown (chocolate brown)", "S02 – Mid brown (milk-chocolate)",
+    "S03 – Reddish-brown (earth brown)", "S04 – Brown (standard brown)",
+    "S05 – Light brown (tan brown)", "S06 – Tan / beige (caramel)",
+    "S07 – Very dark brown (dense brown)", "S08 – Grey-brown (dull brown)",
+    "S09 – Grey (washed-out)", "S10 – Dark grey (near black)", "S11 – Black (septic)",
+    "S12 – Yellowish / orange-brown (iron-stained)", "S13 – Greenish (algal tint)",
+    "S14 – White / pale foam (filamentous / scum)"
+  ];
+  var DEFAULTS = {
+    C4: 7, C5: 1, C6: null, C7: 60, C9: 10, C11: 365, C12: "S04 – Brown (standard brown)",
+    C13: 8, C14: 20, C15: 0, C16: 0.2, C17: 8.76, C18: null, C19: null, C20: 730, C21: 8,
+    C22: 9.7, C23: 4, C24: null, C25: 1.42, C26: 1, C27: 10, C28: 90, C29: 1, C30: 2,
+    C31: 0.5, C32: 3, C33: 1, C34: 75, C35: 0.1, C36: 1.5, C37: 60, C38: 180, C39: 50,
+    C40: 3.5, C41: 1.12, C42: 0.8, C43: 45, C44: 120, C45: 15, C48: 0.8, C49: 0.9,
+    C50: 1.15, C51: 719
+  };
+
+  function blank(v) { return v === null || v === undefined || v === ""; }
+  function n(v) { return blank(v) ? 0 : Number(v); }           // blank -> 0 in arithmetic/comparison
+  function ceil(x, s) { if (s === 0) return 0; return Math.ceil(x / s - 1e-12) * s; }
+  function floor(x, s) { return Math.floor(x / s + 1e-12) * s; }
+  function round0(x) { var a = Math.abs(x); var r = Math.floor(a + 0.5 + 1e-12); return x < 0 ? -r : r; }
+  function min() { return Math.min.apply(null, arguments); }
+  function max() { return Math.max.apply(null, arguments); }
+  function lookup(pe, key, dflt) {
+    for (var i = 0; i < TANKS.length; i++) if (TANKS[i].pe === Number(pe) && !blank(pe)) return TANKS[i][key];
+    return dflt;
+  }
+  function str(x) { return String(Object.is(x, -0) ? 0 : x); }
+
+  function calc(inp) {
+    var I = {}; for (var k in DEFAULTS) I[k] = (k in inp) ? inp[k] : DEFAULTS[k];
+    var C4 = n(I.C4), C5 = n(I.C5);
+    var C6 = blank(I.C6) ? lookup(I.C4, "flow", 0) : n(I.C6);
+    var C7 = n(I.C7), C9 = n(I.C9), C11 = n(I.C11);
+    var C12 = blank(I.C12) ? "" : String(I.C12), col = C12.substring(0, 3);
+    var C13 = n(I.C13), C14 = n(I.C14), C15 = n(I.C15), C16 = n(I.C16), C17 = n(I.C17);
+    var C18 = n(I.C18), C19b = blank(I.C19), C19 = n(I.C19), C20 = n(I.C20), C21 = n(I.C21);
+    var C22 = n(I.C22), C23 = n(I.C23), C24b = blank(I.C24), C24 = n(I.C24);
+    var C25 = n(I.C25), C26 = n(I.C26), C27 = n(I.C27), C28 = n(I.C28), C29 = n(I.C29), C30 = n(I.C30);
+    var C31 = n(I.C31), C32 = n(I.C32), C33 = n(I.C33), C34 = n(I.C34), C35 = n(I.C35), C36 = n(I.C36);
+    var C37 = n(I.C37), C38 = n(I.C38), C39 = n(I.C39), C40 = n(I.C40), C41 = n(I.C41), C42 = n(I.C42);
+    var C43 = n(I.C43), C44 = n(I.C44), C45 = n(I.C45), C48 = n(I.C48), C49 = n(I.C49), C50 = n(I.C50), C51 = n(I.C51);
+    var c = function () { for (var i = 0; i < arguments.length; i++) if (col === arguments[i]) return true; return false; };
+    var septic = c("S10", "S11");
+
+    var C46 = lookup(I.C4, "ext", 10);
+    var C8 = C7 / 0.333, C10 = C9 / 0.333;
+    var C52 = lookup(I.C4, "vol", 0), C53 = lookup(I.C4, "h", 0);
+    var C54 = (C52 <= 0 || C53 <= 0) ? 0 : max(0, C52 - ((C52 / C53) * (C8 / 1000)));
+    var C55 = (C4 <= 0 || C45 <= 0) ? 0 : ceil(min(C44, max(C43, C43 + ((C44 - C43) * min(1, max(0, C5 / C4))))), C45);
+    var C56 = (blank(I.C7) || blank(I.C9) || C11 <= 0) ? "" : (C8 - C10) / C11;
+    var has56 = C56 !== "";
+    var C57 = !has56 ? "NO RATE — ENTER BOTH SLUDGE READINGS AND ELAPSED DAYS" :
+      C56 < 0 ? "NET SOLIDS LOSS — CHECK DESLUDGING, WASHOUT OR CARRYOVER" :
+      C56 < C35 ? "LITTLE NET ACCUMULATION — LOW LOAD/ACTIVITY OR SOLIDS LOSS POSSIBLE" :
+      C56 <= C36 ? "GRADUAL ACCUMULATION — DEVELOPING/STABLE TREND" :
+      "RAPID ACCUMULATION — CHECK SLUDGE AGE, WASTING AND BULKING";
+    var C59 = c("S01", "S02", "S03", "S04") ? "Healthy brown biomass; TP generally good if solids are retained" :
+      c("S05", "S06") ? "Young/low biomass; TP may rise where biomass is insufficient" :
+      c("S07") ? "Mature/older sludge; TP can be good but response may be slower" :
+      c("S08", "S09") ? "Stressed/inactive biomass; elevated TP risk" :
+      septic ? "Septic conditions; phosphorus release and poor treatment likely" :
+      c("S12") ? "Iron-stained; usually not directly adverse to TP" :
+      c("S13") ? "Algal tint; not normally a direct TP issue" :
+      "Foam/filamentous scum; solids carryover can elevate TP";
+    var C60 = c("S01", "S02", "S03", "S04") ? "Maintain cycle, DO, sludge age and routine monitoring" :
+      c("S05", "S06") ? "Build biomass; retain solids and consider compatible transfusion/bioaugmentation" :
+      c("S07") ? "Check sludge age, settlement, wasting rate and DO" :
+      c("S08", "S09") ? "Check DO, pH, loading and toxicity; correct cause and recover biomass" :
+      septic ? "Urgently restore controlled aeration/mixing; remove septic solids and reseed" :
+      c("S12") ? "Investigate iron source and verify TP/SS" :
+      c("S13") ? "Reduce light ingress and remove surface algae" :
+      "Control FOG/detergents; review aeration, settlement and decant";
+    var C61 = C8 < C34 ? "LOW BIOMASS" : C8 > 250 ? "HIGH SLUDGE — CHECK SETTLEMENT/WASTING" : "BIOMASS DEPTH ACCEPTABLE";
+    var C64 = C16 > C32 ? "NITRIFICATION FAILURE" : C15 > C33 ? "NITRIFICATION UNSTABLE" :
+      C14 > C30 ? "HIGH NITRATE / DENITRIFICATION FAILURE" : "NITROGEN ACCEPTABLE";
+    var C65 = C13 > C29 ? "HIGH TP" : "TP ACCEPTABLE";
+    var C66 = max(0, C14 - C30);
+    var C67 = C66 * C54 * 1000 / 1000;
+    var C68 = ((C67 * C40) / C41) / (C25 * C26);
+    var C69 = max(0, (C17 - C31) * C54 * 1000 / 1000 / C41 / (C25 * C26));
+    var C70 = ceil((((C54) * C39) + (max(0, (C17 - C31) * C54 * 1000 / 1000) / C41)) / (C25 * C26), C27);
+    var C86 = !C24b ? C24 : max(0.1, Math.pow(1.07, C22 - 20) *
+      (C8 < C34 ? 0.35 : c("S05", "S06") ? 0.6 : c("S08", "S09", "S10", "S11") ? 0.4 : 1) *
+      (C21 < 6.5 ? 0.5 : C21 > 8.5 ? 0.7 : 1));
+    var C72 = C66 === 0 ? 0 : min(C38, max(C37, ceil((C66 / C86) * 60 * 1.2, 15)));
+    var mix = max(C28, C72);
+    var C73 = max(0, C51 - (mix + C55 + C46));
+    var C88 = C4 > 0 ? C5 / C4 : 0;
+    var C85 = !C19b ? C19 : max(0, C18 - ((C8 < C34 ? 0.25 : c("S08", "S09", "S10", "S11") ? 0.35 : c("S05", "S06") ? 0.6 : 1.2) *
+      Math.pow(1.07, C22 - 20) * max(0.5, min(1.5, 0.5 + (C4 > 0 ? C5 / C4 : 0))) * (mix / 60)));
+    var C58 = septic ? "SEPTIC / BIOLOGICALLY FAILED" :
+      (has56 && C56 > C36 && c("S08", "S09", "S14")) ? "HIGH SOLIDS GROWTH BUT POOR QUALITY — BULKING/STRESS LIKELY" :
+      (c("S01", "S02", "S03", "S04") && (!has56 || C56 >= C35) && C85 <= C31) ? "HEALTHY / ACTIVE BIOMASS" :
+      (c("S05", "S06") || (has56 && C56 < C35)) ? "LOW OR DEVELOPING BIOLOGICAL ACTIVITY" :
+      "MODERATE / UNCERTAIN — VERIFY WITH DO UPTAKE AND SETTLEMENT";
+    var C62 = C85 <= C31 ? (C18 <= C31 ? "ANOXIA ACHIEVED AND SUSTAINED" : "ANOXIA ACHIEVED BY END OF MIXING") :
+      (C18 <= C31 ? "DO FELL BUT WAS NOT SUSTAINED" : "INSUFFICIENT OXYGEN REDUCTION");
+    var C63 = septic ? "URGENT RESEED / COMPATIBLE SLUDGE TRANSFUSION" :
+      (C8 < C34 && (C18 > C31 || C85 > C31 || C13 > C29) && (C20 < 56 || C23 >= 2)) ? "TRANSFUSION RECOMMENDED BEFORE FURTHER CARBON TRIAL" :
+      C8 > 250 ? "DO NOT TRANSFUSE — CHECK AGEING/SETTLEMENT" : "TRANSFUSION NOT CURRENTLY TRIGGERED";
+    var transfuse = C63 === "URGENT RESEED / COMPATIBLE SLUDGE TRANSFUSION" || C63 === "TRANSFUSION RECOMMENDED BEFORE FURTHER CARBON TRIAL";
+    var C81 = C16 > C32 ? "INITIAL SHOT ONLY — RESTORE NITRIFICATION BEFORE FURTHER CARBON" :
+      C15 > C33 ? "INITIAL SHOT ONLY — STABILISE NITRIFICATION BEFORE FURTHER CARBON" :
+      transfuse ? "INITIAL SHOT FIRST; TRANSFUSE BEFORE ANY ADDITIONAL DOSE" :
+      (C85 <= C31 && C14 > C30) ? "READY FOR ADDITIONAL NITRATE DOSE" :
+      C14 > C30 ? "INITIAL SHOT REQUIRED — MONITOR DO RESPONSE" : "INITIAL SHOT REQUIRED — NO ADDITIONAL NITRATE DOSE";
+    var ready = C81 === "READY FOR ADDITIONAL NITRATE DOSE";
+    var C71 = ready ? max(0, ceil((C68 * C42) - max(0, C70 - C69), C27)) : 0;
+    var C74 = (C5 <= 0 || C6 <= 0 || C53 <= 0 || C51 <= 0) ? 0 :
+      (((C5 * 60) * 1.5) * C50) / (24 / (C51 / 60)) / ((C6 * 0.276) * (max(0.001, (C53 - 0.1) * 0.035) * C48 * C49));
+    var C75 = C73 > 0 ? C74 / C73 : 0;
+    var C47 = C75 <= 0 ? 20 : (C75 < 0.05 ? max(20, min(180, floor(1 / C75, 5))) : 20);
+    var C93 = C73 <= 0 ? 0 : max(1, min(C47 - 3, round0(C47 * 0.75 * Math.pow(min(1, max(0, C88)), 0.7))));
+    var nitOK = C16 <= C32 && C15 <= C33, nitBad = C16 > C32 || C15 > C33;
+    var C94 = nitBad ? (C17 < 2 ? 3 : (C17 < 4 ? 2 : 0)) : (C17 >= 4 ? -min(7, round0(C17 - 3)) : (C17 < 2 ? 1 : 0));
+    var C95 = c("S05", "S06", "S07", "S14") ? -1 : (c("S08", "S09") ? -2 : 0);
+    var C96 = (!has56 || C11 < 14 || C11 > 365) ? 0 : (C56 < C35 ? -1 : (C56 > C36 ? 1 : 0));
+    var C76 = C73 <= 0 ? 0 : septic ? max(1, round0(C47 * 0.75)) :
+      (nitOK || C17 > 4) ? max(3, min(C47 - 3, C93 + C94 + min(0, C95) + min(0, C96))) :
+      max(1, min(C47 - 3, C93 + C94 + C95 + C96));
+    var C77 = max(0, C47 - C76);
+    var o2 = (24 / (C51 / 60)) * ((C6 * 0.276) * (max(0.001, (C53 - 0.1) * 0.035) * C48 * C49));
+    var C78 = C5 <= 0 ? 1 : (C73 <= 0 ? 0 :
+      (((Math.floor(C73 / C47) * C76) + min(C73 % C47, C76)) * o2 / (((C5 * 60) * 1.5) * C50)));
+    var C79 = mix + C73 + C55 + C46;
+    var C80 = C79 > C51 ? "FAIL — CYCLE EXCEEDS HARD MAXIMUM" : C5 > C4 ? "FAIL — ACTUAL OCCUPANTS EXCEED DESIGN PE" :
+      C73 <= 0 ? "FAIL — NO AERATION WINDOW" : C74 > C73 ? "FAIL — THEORETICAL OXYGEN NEED EXCEEDS AERATION PHASE" :
+      (C78 < 0.8 && C17 > 4 && nitOK) ? "FIELD OVERRIDE — MODEL COVERAGE IS LOW BUT MEASURED DO SHOWS OXYGEN SURPLUS" :
+      C78 < 0.8 ? "CAUTION — MODELLED OXYGEN COVERAGE BELOW 80%; VERIFY AMMONIA AND END-AERATION DO" :
+      C78 > 1.5 ? "CAUTION — MODELLED OXYGEN COVERAGE ABOVE 150%; CHECK FOR DO SATURATION" :
+      "PASS — MODELLED COVERAGE WITHIN FIELD-CALIBRATION RANGE";
+    var C90 = C66 <= 0 ? "PASS — NO NITRATE REMOVAL REQUIRED" :
+      (((C66 / C86) * 60 * 1.2) > C38 ? "FAIL — ESTIMATED NITRATE REMOVAL NEEDS MORE THAN MAXIMUM MIXING TIME" : "PASS — WITHIN ANOXIC MIXING CAPACITY");
+    var trendOK = has56 && C11 >= 14 && C11 <= 365;
+    var C82 = septic ? "Restore controlled aeration/mixing, remove septic solids as required and reseed with compatible healthy sludge" :
+      (C5 > C4 || C73 <= 0 || C74 > C73) ? "Correct loading, compressor or phase capacity before nutrient optimisation" :
+      nitBad ? "Restore nitrification and verify ammonia/nitrite before any additional carbon" :
+      C90.substring(0, 4) === "FAIL" ? "Establish the observed denitrification rate by timed nitrate trial; improve biomass/carbon contact before extending beyond the maximum anoxic phase" :
+      (trendOK && C56 < C35) ? "Low measured sludge accumulation: check solids loss/loading and consider compatible sludge transfusion if blanket and DO response also remain poor" :
+      (trendOK && C56 > C36) ? "Rapid sludge accumulation: check settling, sludge age and wasting; do not transfuse solely for high blanket depth" :
+      C65 === "HIGH TP" ? "Verify nitrate and DO depletion, then run a true anaerobic-to-aerobic phosphorus sequence" :
+      (C17 > 4 && C16 <= C32) ? "Use the reduced loading-based aeration pulse and verify end-aeration DO plus ammonia after 24–48 hours" :
+      "Maintain the calculated cycle and monitor DO, ammonia, nitrate and sludge trend";
+    var C83 = "1 Initial sugar shot as aeration stops → 2 confirm DO ≤ target → 3 " +
+      (ready ? "apply staged nitrate dose and mix anoxically → 4 " : transfuse ? "transfuse/reseed and repeat DO trial → 4 " : "no further carbon → 4 ") +
+      (C65 === "HIGH TP" ? "confirm nitrate ≤ target → true anaerobic phase → aerobic P uptake → settle/decant" : "complete aeration → settle/decant");
+    var C84 = "After changing to " + str(C76) + " ON / " + str(C77) + " OFF, record end-aeration DO and ammonia after 24–48 hours; retain only if ammonia remains ≤ " +
+      C32.toFixed(1) + " mg/L and DO trends toward 2–4 mg/L. Record sludge depth/colour, Hanna TP, nitrate and nitrite at the same cycle point.";
+    var C89 = septic ? "RECOVERY — SEPTIC SLUDGE OVERRIDE USES 15/5 WHILE RESEEDING" :
+      C5 > C4 ? "FAIL — LOADING EXCEEDS DESIGN PE" : C73 <= 0 ? "FAIL — NO AERATION WINDOW" :
+      C74 > C73 ? "FAIL — THEORETICAL OXYGEN NEED EXCEEDS AVAILABLE PHASE" :
+      (nitBad && C17 < 2) ? "ACTION — NITRIFICATION FAILURE WITH LOW DO; INCREASE AND VERIFY AERATION" :
+      (nitBad && C17 >= 4) ? "ACTION — NITRIFICATION FAILURE DESPITE ADEQUATE DO; CHECK BIOMASS, pH AND TOXICITY, NOT MORE AIR" :
+      (C17 > 4 && nitOK) ? "FIELD OVERRIDE — HIGH DO WITH NITRIFICATION CONTROLLED; USE REDUCED PULSE AND VERIFY" :
+      C78 < 0.8 ? "CAUTION — MODEL COVERAGE BELOW 80%; VERIFY AMMONIA AND END-AERATION DO" :
+      C78 > 1.5 ? "CAUTION — MODEL COVERAGE ABOVE 150%; CHECK FOR DO SATURATION" :
+      "PASS — FIELD SETTING PLAUSIBLE; CALIBRATE TO DO/AMMONIA TREND";
+    var C91 = septic ? "RECOVERY REQUIRED — SEPTIC SLUDGE; RESEED BEFORE RELYING ON THE CYCLE" :
+      (C5 > C4 || C73 <= 0 || C74 > C73) ? C89 : C90.substring(0, 4) === "FAIL" ? C90 :
+      (C89.substring(0, 7) === "CAUTION" || C89.substring(0, 6) === "ACTION" || C89.substring(0, 5) === "FIELD") ? C89 :
+      (trendOK && (C56 < C35 || C56 > C36)) ? "WORKABLE WITH SLUDGE-MANAGEMENT ACTION — SEE PRIMARY ACTION" :
+      "WORKABLE — IMPLEMENT AS A MONITORED TRIAL AND VERIFY DO/AMMONIA";
+    var sgn = function (x) { return (x >= 0 ? "+" : "") + str(x); };
+    var C97 = septic ? "Septic-sludge recovery override: 15 ON / 5 OFF while restoring biomass; not an optimised steady-state setting" :
+      (nitOK || C17 > 4) ? "MEASURED-RESULT OVERRIDE: loading baseline " + str(C93) + " ON / " + str(C47 - C93) + " OFF; DO/nitrification " + sgn(C94) + "; positive sludge/loading uplifts suppressed; final " + str(C76) + " ON / " + str(C77) + " OFF" :
+      "Baseline " + str(C93) + " ON / " + str(C47 - C93) + " OFF; DO/nitrification " + sgn(C94) + "; sludge colour " + sgn(C95) + "; accumulation " + sgn(C96) + "; final " + str(C76) + " ON / " + str(C77) + " OFF";
+    var C98 = septic ? "SEPTIC-SLUDGE RECOVERY OVERRIDE" : (C17 > 4 && nitOK) ? "MEASURED DO OVERRIDE — OXYGEN SURPLUS CONFIRMED" :
+      nitBad ? "NITRIFICATION RECOVERY CONTROL" : "LOADING BASELINE WITH FIELD CORRECTIONS";
+
+    return {
+      C6: C6, C8: C8, C10: C10, C46: C46, C47: C47, C52: C52, C53: C53, C54: C54, C55: C55, C56: C56, C57: C57,
+      C58: C58, C59: C59, C60: C60, C61: C61, C62: C62, C63: C63, C64: C64, C65: C65, C66: C66, C67: C67,
+      C68: C68, C69: C69, C70: C70, C71: C71, C72: C72, C73: C73, C74: C74, C75: C75, C76: C76, C77: C77,
+      C78: C78, C79: C79, C80: C80, C81: C81, C82: C82, C83: C83, C84: C84, C85: C85, C86: C86, C88: C88,
+      C89: C89, C90: C90, C91: C91, C93: C93, C94: C94, C95: C95, C96: C96, C97: C97, C98: C98,
+      H4: mix, J4: max(0, C47 - 1), K8: C70 + C71
+    };
+  }
+  var api = { calc: calc, TANKS: TANKS, COLOURS: COLOURS, DEFAULTS: DEFAULTS };
+  if (typeof module !== "undefined" && module.exports) module.exports = api; else root.SBR = api;
+})(this);
+
+</script>
+<script>
+(function(){
+var F={
+ tank:[["C4","Design capacity","PE","pe"],["C5","People using it","occupants"],["C6","Compressor flow","L/min — leave blank to use tank default"]],
+ sludge:[["C7","Survey sludge depth now","mm (survey tube reading)"],["C9","Previous survey depth","mm"],["C11","Days between surveys","days"],["C12","Sludge colour","","colour"],["C20","Days since desludging","days"]],
+ tests:[["C13","Hanna TP","mg/L P"],["C14","Nitrate-N","mg/L N"],["C15","Nitrite-N","mg/L N"],["C16","Ammonia-N","mg/L N"],["C17","DO before sugar","mg/L"],["C18","Lowest DO after sugar shot","mg/L — needed for dosing"],["C21","pH",""],["C22","Temperature","°C"],["C23","High-TP tests in a row","count"]],
+ opt:[["C19","DO at end of mixing","mg/L — blank = estimated"],["C24","Measured denitrification rate","mg/L N/hour — blank = estimated"]],
+ adv:[["C25","Sugar density","g/mL"],["C26","Active sugar fraction","1.00 unless diluted"],["C27","Dose rounding","mL"],["C28","Base denitrification phase","min"],["C29","TP target","mg/L P"],["C30","Nitrate-N target","mg/L N"],["C31","Anoxic DO target","mg/L"],["C32","Ammonia-N trigger","mg/L N"],["C33","Nitrite-N trigger","mg/L N"],["C34","Low-biomass trigger","mm sludge"],["C35","Min healthy accumulation","mm/day"],["C36","High accumulation rate","mm/day"],["C37","Min anoxic mixing","min"],["C38","Max anoxic mixing","min"],["C39","DO-crash dose rate","g sugar/m³"],["C40","COD:N design factor","g COD/g NO₃-N"],["C41","Sugar COD equivalent","g COD/g sugar"],["C42","Initial staged-dose fraction",""],["C43","Min settlement","min"],["C44","Full-load settlement","min"],["C45","Settlement rounding","min"],["C48","Alpha factor",""],["C49","Diffuser / fouling factor",""],["C50","Design safety factor",""],["C51","Hard maximum cycle","min"]]
+};
+var KEY="sbr-calc-v3", state={};
+try{state=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){state={}}
+function val(k){return (k in state)?state[k]:SBR.DEFAULTS[k]}
+function build(g){
+ var host=document.getElementById("g-"+g);
+ F[g].forEach(function(f){
+  var d=document.createElement("div");d.className="f"+(f[3]==="colour"?" wide":"");
+  var lab='<label for="'+f[0]+'">'+f[1]+(f[2]?'<span>'+f[2]+'</span>':'')+'</label>', el;
+  if(f[3]==="pe"){el='<select id="'+f[0]+'">'+SBR.TANKS.map(function(t){return '<option value="'+t.pe+'">'+t.pe+' PE</option>'}).join("")+'</select>'}
+  else if(f[3]==="colour"){el='<select id="'+f[0]+'">'+SBR.COLOURS.map(function(c){return '<option>'+c+'</option>'}).join("")+'</select>'}
+  else el='<input id="'+f[0]+'" type="number" inputmode="decimal" step="any">';
+  d.innerHTML=lab+el;host.appendChild(d);
+  var e=d.querySelector("input,select"),v=val(f[0]);
+  e.value=(v===null||v===undefined)?"":v;
+  e.addEventListener("input",function(){
+   var x=e.value; state[f[0]]=(f[3]==="colour")?x:(x===""?null:Number(x));
+   try{localStorage.setItem(KEY,JSON.stringify(state))}catch(err){}
+   run();
+  });
+ });
+}
+Object.keys(F).forEach(build);
+function inputs(){var o={};Object.keys(SBR.DEFAULTS).forEach(function(k){o[k]=val(k)});return o}
+function fmt(x,d){if(typeof x!=="number")return x===""?"—":String(x);if(!isFinite(x))return "Error";return (+x.toFixed(d===undefined?2:d)).toLocaleString("en-GB")}
+function cls(s){s=String(s);if(/^(FAIL|RECOVERY)/.test(s))return "s-bad";if(/^(CAUTION|ACTION)/.test(s))return "s-warn";return "s-ok"}
+var $=function(id){return document.getElementById(id)}, last;
+function run(){
+ var I=inputs(),r=SBR.calc(I);last={I:I,r:r};
+ var iv=r.C76+r.C77;
+ $("air").innerHTML=r.C76+'<small> ON</small> / '+r.C77+'<small> OFF</small>';
+ $("airn").textContent="minutes per "+iv+"-min interval · GRAF full load 15/5";
+ $("sugar").innerHTML=fmt(r.C70,0)+'<small> mL</small>';
+ $("sugarn").textContent=r.C71>0?("+ "+fmt(r.C71,0)+" mL staged dose · total "+fmt(r.K8,0)+" mL"):"as the air stops · no extra dose";
+ $("pMix").textContent=fmt(r.H4,0);$("pAer").textContent=fmt(r.C73,0);$("pSet").textContent=fmt(r.C55,0);$("pExt").textContent=fmt(r.C46,0);
+ $("tot").textContent="Total cycle "+fmt(r.C79,0)+" min (max "+fmt(I.C51===null?0:I.C51,0)+")";
+ var b18=(I.C18===null||I.C18==="")&&(I.C19===null||I.C19==="");$("warn18").hidden=!b18;
+ var st=$("status");st.className="status "+cls(r.C91);st.textContent=r.C91;
+ $("action").textContent=r.C82;
+ $("C6").placeholder=fmt(SBR.calc(Object.assign({},I,{C6:null})).C6,0);
+ var rows=[["Overall status",r.C91],["Primary action",r.C82],["Operating sequence",r.C83],["Verification",r.C84],
+  ["Carbon dosing gate",r.C81],["Initial sugar shot",fmt(r.C70,0)+" mL"],["Additional staged dose",fmt(r.C71,0)+" mL"],["Full nitrate-demand sugar",fmt(r.C68,1)+" mL"],["Current-DO correction",fmt(r.C69,1)+" mL"],
+  ["Nitrogen",r.C64],["Phosphorus",r.C65],["Nitrate-N to remove",fmt(r.C66)+" mg/L · "+fmt(r.C67,1)+" g"],["Oxygen response to sugar",r.C62],["DO at end of mixing used",fmt(r.C85)+" mg/L"],["Denitrification rate used",fmt(r.C86,3)+" mg/L N/h"],
+  ["Anoxic capacity",r.C90],["Aeration capacity",r.C89],["Capacity compliance",r.C80],["Aeration control basis",r.C98],["Aeration rationale",r.C97],
+  ["Blower runtime needed",fmt(r.C74,1)+" min/cycle · duty "+fmt(r.C75*100,1)+"%"],["Oxygen coverage",fmt(r.C78*100,0)+"%"],["Loading ratio",fmt(r.C88*100,0)+"%"],
+  ["Tank volume / water height",fmt(r.C52)+" m³ / "+fmt(r.C53,3)+" m"],["Active liquid volume",fmt(r.C54,3)+" m³"],
+  ["Sludge blanket now / previous",fmt(r.C8,0)+" / "+fmt(r.C10,0)+" mm"],["Accumulation rate",(r.C56===""?"—":fmt(r.C56,3)+" mm/day")],["Accumulation trend",r.C57],
+  ["Biomass condition",r.C61],["Biological activity",r.C58],["Colour / TP implication",r.C59],["Colour mitigation",r.C60],["Sludge transfusion",r.C63]];
+ $("report").innerHTML=rows.map(function(x){return '<div class="r"><div class="k">'+x[0]+'</div><div class="x">'+String(x[1]).replace(/</g,"&lt;")+'</div></div>'}).join("");
+ last.rows=rows;
+}
+run();
+function copyText(t){
+ function fb(){var a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();var ok=false;try{ok=document.execCommand("copy")}catch(e){}document.body.removeChild(a);return ok}
+ if(navigator.clipboard&&navigator.clipboard.writeText){return navigator.clipboard.writeText(t).then(function(){return true},function(){return fb()})}
+ return Promise.resolve(fb());
+}
+$("copy").addEventListener("click",function(){
+ var r=last.r,I=last.I;
+ var t="SBR cycle — "+I.C4+" PE, "+I.C5+" people\nAir "+r.C76+" ON / "+r.C77+" OFF\nSugar "+fmt(r.C70,0)+" mL"+(r.C71>0?" + "+fmt(r.C71,0)+" mL staged":"")+
+  "\nMix "+fmt(r.H4,0)+" / aerate "+fmt(r.C73,0)+" / settle "+fmt(r.C55,0)+" / extract "+fmt(r.C46,0)+" = "+fmt(r.C79,0)+" min\n\n"+
+  last.rows.map(function(x){return x[0]+": "+x[1]}).join("\n");
+ var b=this;copyText(t).then(function(ok){b.textContent=ok?"Copied":"Copy failed";setTimeout(function(){b.textContent="Copy results"},1500)});
+});
+$("reset").addEventListener("click",function(){
+ if(!this.dataset.c){this.dataset.c=1;this.textContent="Tap again to reset";var b=this;setTimeout(function(){delete b.dataset.c;b.textContent="Reset to defaults"},2500);return}
+ state={};try{localStorage.removeItem(KEY)}catch(e){}location.reload();
+});
+})();
+</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(function(){})}</script>
+</body>
+</html>
