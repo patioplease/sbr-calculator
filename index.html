@@ -578,8 +578,11 @@ function engineerText(){
 $("send").addEventListener("click",()=>{
  if(!last)return;const note=$("savenote");
  if(!siteName()){note.className="note";note.style.color="var(--bad)";note.textContent="Enter the site name at the top first.";$("site").scrollIntoView({block:"center"});$("site").focus();return}
- note.style.color="";const t=engineerText();
- if(navigator.share){navigator.share({title:"SBR settings — "+siteName(),text:t}).catch(()=>{});return}
+ note.style.color="";const t=engineerText(),subj="SBR settings — "+(siteKey(siteName())||siteName());
+ const mobile=(navigator.userAgentData&&navigator.userAgentData.mobile)||/Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent);
+ if(mobile&&navigator.share){navigator.share({title:subj,text:t}).catch(()=>{});return}
+ if(!mobile){location.href="mailto:?subject="+encodeURIComponent(subj)+"&body="+encodeURIComponent(t);
+  copyText(t).then(ok=>{note.className="note ok";note.textContent="Opening your email app"+(ok?" (also copied, in case it doesn't open).":".")});return}
  copyText(t).then(ok=>{note.className="note ok";note.textContent=ok?"Copied — paste it into a message to the engineer.":"Couldn't copy on this device."});
 });
 function copyText(t){
