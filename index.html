@@ -4,92 +4,101 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
-<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0f6e5c"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
-<title>SBR Aeration Calculator</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0e7cc3"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<title>SBR Calculator</title>
 <style>
-:root{--bg:#f3f5f4;--card:#fff;--ink:#17201c;--mut:#5d6b65;--line:#dde3e0;--acc:#0f6e5c;--accs:#e3f1ed;
---ok:#1e7a46;--okb:#e4f4ea;--warn:#a05a00;--warnb:#fdf0dc;--bad:#b3261e;--badb:#fbe5e3;--inp:#f7f9f8}
-@media (prefers-color-scheme:dark){:root{--bg:#0f1412;--card:#18201d;--ink:#e6ece9;--mut:#9aa8a2;--line:#2a3430;
---acc:#5cc9ae;--accs:#183129;--ok:#6fd49a;--okb:#16291e;--warn:#f0b35a;--warnb:#2e2414;--bad:#ff8a80;--badb:#33191a;--inp:#121916}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
-header{padding:16px 16px 4px}
-h1{font-size:19px;margin:0;letter-spacing:-.01em}
-.sub{color:var(--mut);font-size:13px;margin-top:2px}
-main{padding:8px 12px 40px;max-width:640px;margin:0 auto}
+:root{--bg:#f2f6f9;--card:#fff;--ink:#14212b;--mut:#5c6c78;--line:#dbe4ea;--acc:#0e7cc3;--acc2:#18b4e3;--accs:#e6f3fb;
+--ok:#1e7a46;--okb:#e4f4ea;--warn:#9a5600;--warnb:#fdf0dc;--bad:#b3261e;--badb:#fbe5e3;--inp:#f7fafc}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1419;--card:#16212a;--ink:#e5edf2;--mut:#95a6b2;--line:#263540;
+--acc:#4fb3ec;--acc2:#5fd0f2;--accs:#132c3d;--ok:#6fd49a;--okb:#14281d;--warn:#f0b35a;--warnb:#2e2414;--bad:#ff8a80;--badb:#33191a;--inp:#111b22}}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+header{display:flex;align-items:center;gap:12px;padding:16px 16px 6px;max-width:640px;margin:0 auto}
+header img{width:40px;height:40px}
+h1{font-size:20px;margin:0;letter-spacing:-.01em}
+main{padding:4px 12px 40px;max-width:640px;margin:0 auto}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
-.card h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:0 0 10px}
-.big{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.stat{background:var(--accs);border-radius:10px;padding:10px}
-.stat .l{font-size:12px;color:var(--mut)}
-.stat .v{font-size:26px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.stat .v small{font-size:14px;font-weight:600;color:var(--mut)}
-.stat .n{font-size:12px;color:var(--mut)}
-.phases{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px;text-align:center}
-.ph{border:1px solid var(--line);border-radius:9px;padding:6px 2px}
-.ph .v{font-weight:700;font-size:17px;font-variant-numeric:tabular-nums}
-.ph .l{font-size:11px;color:var(--mut)}
-.total{margin-top:8px;font-size:13px;color:var(--mut);text-align:right}
-.status{margin-top:12px;border-radius:10px;padding:10px 12px;font-weight:600;font-size:14px}
-.s-ok{background:var(--okb);color:var(--ok)}.s-warn{background:var(--warnb);color:var(--warn)}.s-bad{background:var(--badb);color:var(--bad)}
-.next{margin-top:10px;font-size:14px}
-.next b{display:block;font-size:12px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
-.alert{background:var(--warnb);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13.5px;margin-top:10px;font-weight:500}
-.f{display:grid;grid-template-columns:1fr 128px;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line)}
-.f:first-of-type{border-top:0}
-.f label{font-size:14px}
-.f label span{display:block;font-size:12px;color:var(--mut)}
-.f input,.f select{width:100%;font:inherit;font-size:16px;padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:var(--inp);color:var(--ink);text-align:right}
-.f select{text-align:left}
+.card h2{font-size:15px;margin:0 0 6px}
+.f{display:grid;grid-template-columns:1fr 120px;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line)}
+.card h2+.f,summary+.f{border-top:0}
+.f label{font-size:15px}
+.f label i{font-style:normal;color:var(--mut);font-size:13px}
 .f.wide{grid-template-columns:1fr}
+.f input,.f select{width:100%;font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--inp);color:var(--ink);text-align:right;min-height:44px}
+.f select{text-align:left}
 .f input:focus,.f select:focus{outline:2px solid var(--acc);outline-offset:-1px}
-details.card>summary{cursor:pointer;list-style:none;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);font-weight:600}
+.f.need input,.f.need select{border-color:var(--acc)}
+#res h2{display:flex;justify-content:space-between;align-items:baseline}
+#res h2 span{font-weight:500;font-size:13px;color:var(--mut)}
+.empty{color:var(--mut);font-size:15px;padding:6px 0 2px}
+.empty b{color:var(--ink)}
+.big{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--accs);border-radius:11px;padding:10px 12px}
+.stat .l{font-size:13px;color:var(--mut)}
+.stat .v{font-size:clamp(24px,7vw,30px);font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat .v small{font-size:14px;font-weight:600;color:var(--mut)}
+.stat .n{font-size:13px;color:var(--mut)}
+.phases{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px;text-align:center}
+.ph{border:1px solid var(--line);border-radius:9px;padding:6px 2px}
+.ph .v{font-weight:700;font-size:18px;font-variant-numeric:tabular-nums}
+.ph .l{font-size:12px;color:var(--mut)}
+.total{margin-top:6px;font-size:13px;color:var(--mut);text-align:right}
+.status{margin-top:12px;border-radius:11px;padding:10px 12px}
+.status b{display:block;font-size:16px}
+.status span{font-size:13px;opacity:.9}
+.s-ok{background:var(--okb);color:var(--ok)}.s-warn{background:var(--warnb);color:var(--warn)}.s-bad{background:var(--badb);color:var(--bad)}
+.next{margin-top:10px;font-size:15px}
+.next b{display:block;font-size:13px;color:var(--mut);font-weight:600;margin-bottom:2px}
+details.card>summary{cursor:pointer;list-style:none;font-size:15px;font-weight:600;min-height:24px}
 details.card>summary::-webkit-details-marker{display:none}
-details.card>summary::after{content:"▸";float:right;transition:transform .15s}
+details.card>summary::after{content:"▸";float:right;color:var(--mut);transition:transform .15s}
 details[open].card>summary::after{transform:rotate(90deg)}
-details.card[open]>summary{margin-bottom:10px}
+details.card[open]>summary{margin-bottom:8px}
 .r{padding:8px 0;border-top:1px solid var(--line)}
-.r:first-of-type{border-top:0}
-.r .k{font-size:12px;color:var(--mut)}
-.r .x{font-size:14px;font-variant-numeric:tabular-nums}
-.btns{display:flex;gap:8px;margin:14px 0}
-button{flex:1;font:inherit;font-weight:600;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.r:first-child{border-top:0}
+.r .k{font-size:13px;color:var(--mut)}
+.r .x{font-size:15px}
+.btns{display:flex;gap:8px;margin-top:12px}
+button{flex:1;font:inherit;font-weight:600;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-height:44px}
 button.p{background:var(--acc);border-color:var(--acc);color:#fff}
-@media (prefers-color-scheme:dark){button.p{color:#06231c}}
-.foot{color:var(--mut);font-size:12px;text-align:center;margin-top:6px}
+@media (prefers-color-scheme:dark){button.p{color:#06202f}}
+.foot{color:var(--mut);font-size:13px;text-align:center;margin-top:14px}
 </style>
 </head>
 <body>
-<header><h1>SBR Aeration Calculator</h1><div class="sub">GRAF One2Clean · aeration, sugar dosing &amp; sludge</div></header>
+<header><img alt="NRC" src="data:image/png;base64,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"><h1>SBR Calculator</h1></header>
 <main>
-<section class="card" id="out">
-  <h2>Your settings</h2>
-  <div class="big">
-    <div class="stat"><div class="l">Aeration</div><div class="v" id="air"></div><div class="n" id="airn"></div></div>
-    <div class="stat"><div class="l">Sugar shot</div><div class="v" id="sugar"></div><div class="n" id="sugarn"></div></div>
-  </div>
-  <div class="phases">
-    <div class="ph"><div class="v" id="pMix"></div><div class="l">Mix</div></div>
-    <div class="ph"><div class="v" id="pAer"></div><div class="l">Aerate</div></div>
-    <div class="ph"><div class="v" id="pSet"></div><div class="l">Settle</div></div>
-    <div class="ph"><div class="v" id="pExt"></div><div class="l">Extract</div></div>
-  </div>
-  <div class="total" id="tot"></div>
-  <div class="alert" id="warn18" hidden>“Lowest DO after sugar shot” is blank, so it's treated as 0. That can wrongly allow the extra sugar dose. Fill it in (or the end-of-mixing DO) before trusting the dosing.</div>
-  <div class="status" id="status"></div>
-  <div class="next"><b>Next step</b><span id="action"></span></div>
-</section>
-
 <section class="card"><h2>Tank</h2><div id="g-tank"></div></section>
-<section class="card"><h2>Sludge survey</h2><div id="g-sludge"></div></section>
+<section class="card"><h2>Sludge</h2><div id="g-sludge"></div></section>
 <section class="card"><h2>Test results</h2><div id="g-tests"></div></section>
 
-<details class="card"><summary>Full report</summary><div id="report"></div></details>
+<section class="card" id="res">
+  <h2>Settings <span id="prog"></span></h2>
+  <div id="empty" class="empty"></div>
+  <div id="full" hidden>
+    <div class="big">
+      <div class="stat"><div class="l">Air</div><div class="v" id="air"></div><div class="n" id="airn"></div></div>
+      <div class="stat"><div class="l">Sugar</div><div class="v" id="sugar"></div><div class="n" id="sugarn"></div></div>
+    </div>
+    <div class="phases">
+      <div class="ph"><div class="v" id="pMix"></div><div class="l">Mix</div></div>
+      <div class="ph"><div class="v" id="pAer"></div><div class="l">Aerate</div></div>
+      <div class="ph"><div class="v" id="pSet"></div><div class="l">Settle</div></div>
+      <div class="ph"><div class="v" id="pExt"></div><div class="l">Extract</div></div>
+    </div>
+    <div class="total" id="tot"></div>
+    <div class="status" id="status"><b></b><span></span></div>
+    <div class="next"><b>Next step</b><span id="action"></span></div>
+    <div class="btns"><button class="p" id="copy">Copy results</button></div>
+  </div>
+</section>
+
+<details class="card" id="rep" hidden><summary>Full report</summary><div id="report"></div></details>
 <details class="card"><summary>Optional readings</summary><div id="g-opt"></div></details>
 <details class="card"><summary>Advanced settings</summary><div id="g-adv"></div></details>
 
-<div class="btns"><button class="p" id="copy">Copy results</button><button id="reset">Reset to defaults</button></div>
-<div class="foot">Formulas match Final_Aeration_Cycle_Calulator v3. Inputs are saved on this phone.</div>
+<div class="btns"><button id="reset">Clear all readings</button></div>
+<div class="foot">NRC · GRAF One2Clean SBR · inputs are saved on this phone</div>
 </main>
 <script>
 // SBR Aeration Cycle Calculator engine — direct port of
@@ -291,83 +300,103 @@ button.p{background:var(--acc);border-color:var(--acc);color:#fff}
 
 </script>
 <script>
-(function(){
-var F={
- tank:[["C4","Design capacity","PE","pe"],["C5","People using it","occupants"],["C6","Compressor flow","L/min — leave blank to use tank default"]],
- sludge:[["C7","Survey sludge depth now","mm (survey tube reading)"],["C9","Previous survey depth","mm"],["C11","Days between surveys","days"],["C12","Sludge colour","","colour"],["C20","Days since desludging","days"]],
- tests:[["C13","Hanna TP","mg/L P"],["C14","Nitrate-N","mg/L N"],["C15","Nitrite-N","mg/L N"],["C16","Ammonia-N","mg/L N"],["C17","DO before sugar","mg/L"],["C18","Lowest DO after sugar shot","mg/L — needed for dosing"],["C21","pH",""],["C22","Temperature","°C"],["C23","High-TP tests in a row","count"]],
- opt:[["C19","DO at end of mixing","mg/L — blank = estimated"],["C24","Measured denitrification rate","mg/L N/hour — blank = estimated"]],
- adv:[["C25","Sugar density","g/mL"],["C26","Active sugar fraction","1.00 unless diluted"],["C27","Dose rounding","mL"],["C28","Base denitrification phase","min"],["C29","TP target","mg/L P"],["C30","Nitrate-N target","mg/L N"],["C31","Anoxic DO target","mg/L"],["C32","Ammonia-N trigger","mg/L N"],["C33","Nitrite-N trigger","mg/L N"],["C34","Low-biomass trigger","mm sludge"],["C35","Min healthy accumulation","mm/day"],["C36","High accumulation rate","mm/day"],["C37","Min anoxic mixing","min"],["C38","Max anoxic mixing","min"],["C39","DO-crash dose rate","g sugar/m³"],["C40","COD:N design factor","g COD/g NO₃-N"],["C41","Sugar COD equivalent","g COD/g sugar"],["C42","Initial staged-dose fraction",""],["C43","Min settlement","min"],["C44","Full-load settlement","min"],["C45","Settlement rounding","min"],["C48","Alpha factor",""],["C49","Diffuser / fouling factor",""],["C50","Design safety factor",""],["C51","Hard maximum cycle","min"]]
+{
+const F={
+ tank:[["C4","Tank size","","pe",1],["C5","People using it","",0,1]],
+ sludge:[["C7","Survey sludge depth","mm",0,1],["C12","Sludge colour","","colour",1],["C20","Days since desludging","days",0,1]],
+ tests:[["C13","TP","mg/L",0,1],["C14","Nitrate-N","mg/L",0,1],["C15","Nitrite-N","mg/L",0,1],["C16","Ammonia-N","mg/L",0,1],["C17","DO before sugar","mg/L",0,1],["C18","Lowest DO after sugar","mg/L",0,1],["C21","pH","",0,1],["C22","Temperature","°C",0,1],["C23","High-TP tests in a row","",0,1]],
+ opt:[["C9","Previous survey sludge depth","mm"],["C11","Days between surveys","days"],["C19","DO at end of mixing","mg/L"],["C24","Measured denitrification rate","mg/L N/h"],["C6","Compressor flow (measured)","L/min"]],
+ adv:[["C25","Sugar density","g/mL"],["C26","Active sugar fraction",""],["C27","Dose rounding","mL"],["C28","Base denitrification phase","min"],["C29","TP target","mg/L"],["C30","Nitrate-N target","mg/L"],["C31","Anoxic DO target","mg/L"],["C32","Ammonia-N trigger","mg/L"],["C33","Nitrite-N trigger","mg/L"],["C34","Low-biomass trigger","mm"],["C35","Min healthy accumulation","mm/day"],["C36","High accumulation rate","mm/day"],["C37","Min anoxic mixing","min"],["C38","Max anoxic mixing","min"],["C39","DO-crash dose rate","g/m³"],["C40","COD:N design factor",""],["C41","Sugar COD equivalent",""],["C42","Initial staged-dose fraction",""],["C43","Min settlement","min"],["C44","Full-load settlement","min"],["C45","Settlement rounding","min"],["C48","Alpha factor",""],["C49","Diffuser / fouling factor",""],["C50","Design safety factor",""],["C51","Hard maximum cycle","min"]]
 };
-var KEY="sbr-calc-v3", state={};
+const USER=["C4","C5","C6","C7","C9","C11","C12","C13","C14","C15","C16","C17","C18","C19","C20","C21","C22","C23","C24"];
+const NAMES={};Object.values(F).flat().forEach(f=>NAMES[f[0]]=f[1]);
+const KEY="sbr-calc-v4";let state={};
 try{state=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch(e){state={}}
-function val(k){return (k in state)?state[k]:SBR.DEFAULTS[k]}
+const blank=v=>v===null||v===undefined||v==="";
+const val=k=>(k in state)?state[k]:(USER.includes(k)?null:SBR.DEFAULTS[k]);
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const $=id=>document.getElementById(id);
 function build(g){
- var host=document.getElementById("g-"+g);
- F[g].forEach(function(f){
-  var d=document.createElement("div");d.className="f"+(f[3]==="colour"?" wide":"");
-  var lab='<label for="'+f[0]+'">'+f[1]+(f[2]?'<span>'+f[2]+'</span>':'')+'</label>', el;
-  if(f[3]==="pe"){el='<select id="'+f[0]+'">'+SBR.TANKS.map(function(t){return '<option value="'+t.pe+'">'+t.pe+' PE</option>'}).join("")+'</select>'}
-  else if(f[3]==="colour"){el='<select id="'+f[0]+'">'+SBR.COLOURS.map(function(c){return '<option>'+c+'</option>'}).join("")+'</select>'}
+ const host=$("g-"+g);
+ F[g].forEach(f=>{
+  const d=document.createElement("div");d.className="f"+(f[3]==="colour"?" wide":"");d.dataset.k=f[0];
+  const lab='<label for="'+f[0]+'">'+f[1]+(f[2]?' <i>'+f[2]+'</i>':'')+'</label>';
+  let el;
+  if(f[3]==="pe")el='<select id="'+f[0]+'"><option value="">Choose…</option>'+SBR.TANKS.map(t=>'<option value="'+t.pe+'">'+t.pe+' PE</option>').join("")+'</select>';
+  else if(f[3]==="colour")el='<select id="'+f[0]+'"><option value="">Choose…</option>'+SBR.COLOURS.map(c=>'<option>'+c+'</option>').join("")+'</select>';
   else el='<input id="'+f[0]+'" type="number" inputmode="decimal" step="any">';
   d.innerHTML=lab+el;host.appendChild(d);
-  var e=d.querySelector("input,select"),v=val(f[0]);
-  e.value=(v===null||v===undefined)?"":v;
-  e.addEventListener("input",function(){
-   var x=e.value; state[f[0]]=(f[3]==="colour")?x:(x===""?null:Number(x));
+  const e=d.querySelector("input,select"),v=val(f[0]);
+  e.value=blank(v)?"":v;
+  e.addEventListener("input",()=>{
+   const x=e.value;state[f[0]]=(f[3]==="colour")?(x||null):(x===""?null:Number(x));
    try{localStorage.setItem(KEY,JSON.stringify(state))}catch(err){}
    run();
   });
  });
 }
 Object.keys(F).forEach(build);
-function inputs(){var o={};Object.keys(SBR.DEFAULTS).forEach(function(k){o[k]=val(k)});return o}
+const REQ=Object.values(F).flat().filter(f=>f[4]).map(f=>f[0]);
+function missing(){return REQ.filter(k=>blank(val(k))&&!(k==="C18"&&!blank(val("C19"))))}
 function fmt(x,d){if(typeof x!=="number")return x===""?"—":String(x);if(!isFinite(x))return "Error";return (+x.toFixed(d===undefined?2:d)).toLocaleString("en-GB")}
-function cls(s){s=String(s);if(/^(FAIL|RECOVERY)/.test(s))return "s-bad";if(/^(CAUTION|ACTION)/.test(s))return "s-warn";return "s-ok"}
-var $=function(id){return document.getElementById(id)}, last;
+function verdict(s){s=String(s);
+ if(/^RECOVERY/.test(s))return ["s-bad","Recovery needed"];
+ if(/^FAIL/.test(s))return ["s-bad","Problem — see next step"];
+ if(/^(CAUTION|ACTION)/.test(s))return ["s-warn","Check before using"];
+ return ["s-ok","OK to trial"];}
+let last=null;
 function run(){
- var I=inputs(),r=SBR.calc(I);last={I:I,r:r};
- var iv=r.C76+r.C77;
- $("air").innerHTML=r.C76+'<small> ON</small> / '+r.C77+'<small> OFF</small>';
- $("airn").textContent="minutes per "+iv+"-min interval · GRAF full load 15/5";
+ const I={};Object.keys(SBR.DEFAULTS).forEach(k=>I[k]=val(k));
+ const pe=SBR.TANKS.find(t=>String(t.pe)===String(I.C4));
+ $("C6").placeholder=pe?pe.flow:"";
+ const m=missing();
+ document.querySelectorAll(".f").forEach(d=>d.classList.toggle("need",m.includes(d.dataset.k)&&REQ.length-m.length>0));
+ $("prog").textContent=(REQ.length-m.length)+" of "+REQ.length+" entered";
+ if(m.length){
+  $("full").hidden=true;$("rep").hidden=true;last=null;
+  $("empty").innerHTML=m.length===REQ.length?"Fill in the tank, sludge and test results above to get the air, sugar and cycle settings.":
+   "Still needed: <b>"+m.map(k=>esc(NAMES[k])).join(", ")+"</b>";
+  return;
+ }
+ const r=SBR.calc(I);
+ $("empty").innerHTML="";$("full").hidden=false;$("rep").hidden=false;
+ $("air").innerHTML=r.C76+'<small> on</small> / '+r.C77+'<small> off</small>';
+ $("airn").textContent="minutes, every "+(r.C76+r.C77)+" min";
  $("sugar").innerHTML=fmt(r.C70,0)+'<small> mL</small>';
- $("sugarn").textContent=r.C71>0?("+ "+fmt(r.C71,0)+" mL staged dose · total "+fmt(r.K8,0)+" mL"):"as the air stops · no extra dose";
+ $("sugarn").textContent=r.C71>0?("then + "+fmt(r.C71,0)+" mL staged"):"as the air stops";
  $("pMix").textContent=fmt(r.H4,0);$("pAer").textContent=fmt(r.C73,0);$("pSet").textContent=fmt(r.C55,0);$("pExt").textContent=fmt(r.C46,0);
- $("tot").textContent="Total cycle "+fmt(r.C79,0)+" min (max "+fmt(I.C51===null?0:I.C51,0)+")";
- var b18=(I.C18===null||I.C18==="")&&(I.C19===null||I.C19==="");$("warn18").hidden=!b18;
- var st=$("status");st.className="status "+cls(r.C91);st.textContent=r.C91;
+ $("tot").textContent="Total cycle "+fmt(r.C79,0)+" min";
+ const v=verdict(r.C91),st=$("status");st.className="status "+v[0];st.firstElementChild.textContent=v[1];st.lastElementChild.textContent=r.C91;
  $("action").textContent=r.C82;
- $("C6").placeholder=fmt(SBR.calc(Object.assign({},I,{C6:null})).C6,0);
- var rows=[["Overall status",r.C91],["Primary action",r.C82],["Operating sequence",r.C83],["Verification",r.C84],
-  ["Carbon dosing gate",r.C81],["Initial sugar shot",fmt(r.C70,0)+" mL"],["Additional staged dose",fmt(r.C71,0)+" mL"],["Full nitrate-demand sugar",fmt(r.C68,1)+" mL"],["Current-DO correction",fmt(r.C69,1)+" mL"],
-  ["Nitrogen",r.C64],["Phosphorus",r.C65],["Nitrate-N to remove",fmt(r.C66)+" mg/L · "+fmt(r.C67,1)+" g"],["Oxygen response to sugar",r.C62],["DO at end of mixing used",fmt(r.C85)+" mg/L"],["Denitrification rate used",fmt(r.C86,3)+" mg/L N/h"],
-  ["Anoxic capacity",r.C90],["Aeration capacity",r.C89],["Capacity compliance",r.C80],["Aeration control basis",r.C98],["Aeration rationale",r.C97],
-  ["Blower runtime needed",fmt(r.C74,1)+" min/cycle · duty "+fmt(r.C75*100,1)+"%"],["Oxygen coverage",fmt(r.C78*100,0)+"%"],["Loading ratio",fmt(r.C88*100,0)+"%"],
-  ["Tank volume / water height",fmt(r.C52)+" m³ / "+fmt(r.C53,3)+" m"],["Active liquid volume",fmt(r.C54,3)+" m³"],
-  ["Sludge blanket now / previous",fmt(r.C8,0)+" / "+fmt(r.C10,0)+" mm"],["Accumulation rate",(r.C56===""?"—":fmt(r.C56,3)+" mm/day")],["Accumulation trend",r.C57],
-  ["Biomass condition",r.C61],["Biological activity",r.C58],["Colour / TP implication",r.C59],["Colour mitigation",r.C60],["Sludge transfusion",r.C63]];
- $("report").innerHTML=rows.map(function(x){return '<div class="r"><div class="k">'+x[0]+'</div><div class="x">'+String(x[1]).replace(/</g,"&lt;")+'</div></div>'}).join("");
- last.rows=rows;
+ const rows=[["Operating sequence",r.C83],["Verification",r.C84],["Carbon dosing gate",r.C81],
+  ["Sugar: initial / staged / full demand",fmt(r.C70,0)+" / "+fmt(r.C71,0)+" / "+fmt(r.C68,0)+" mL"],
+  ["Nitrogen",r.C64],["Phosphorus",r.C65],["Oxygen response to sugar",r.C62],["Anoxic capacity",r.C90],["Aeration capacity",r.C89],
+  ["Aeration rationale",r.C97],["Oxygen coverage",fmt(r.C78*100,0)+"%"],["Denitrification rate used",fmt(r.C86,2)+" mg/L N/h"],
+  ["Sludge blanket",fmt(r.C8,0)+" mm"+(r.C56===""?"":" · "+fmt(r.C56,2)+" mm/day")],["Sludge trend",r.C57],["Biomass",r.C61+" · "+r.C58],
+  ["Sludge colour",r.C59+". "+r.C60],["Sludge transfusion",r.C63]];
+ $("report").innerHTML=rows.map(x=>'<div class="r"><div class="k">'+x[0]+'</div><div class="x">'+esc(x[1])+'</div></div>').join("");
+ last={I,r,rows};
 }
 run();
 function copyText(t){
- function fb(){var a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();var ok=false;try{ok=document.execCommand("copy")}catch(e){}document.body.removeChild(a);return ok}
- if(navigator.clipboard&&navigator.clipboard.writeText){return navigator.clipboard.writeText(t).then(function(){return true},function(){return fb()})}
+ const fb=()=>{const a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand("copy")}catch(e){}a.remove();return ok};
+ if(navigator.clipboard&&navigator.clipboard.writeText)return navigator.clipboard.writeText(t).then(()=>true,()=>fb());
  return Promise.resolve(fb());
 }
 $("copy").addEventListener("click",function(){
- var r=last.r,I=last.I;
- var t="SBR cycle — "+I.C4+" PE, "+I.C5+" people\nAir "+r.C76+" ON / "+r.C77+" OFF\nSugar "+fmt(r.C70,0)+" mL"+(r.C71>0?" + "+fmt(r.C71,0)+" mL staged":"")+
-  "\nMix "+fmt(r.H4,0)+" / aerate "+fmt(r.C73,0)+" / settle "+fmt(r.C55,0)+" / extract "+fmt(r.C46,0)+" = "+fmt(r.C79,0)+" min\n\n"+
-  last.rows.map(function(x){return x[0]+": "+x[1]}).join("\n");
- var b=this;copyText(t).then(function(ok){b.textContent=ok?"Copied":"Copy failed";setTimeout(function(){b.textContent="Copy results"},1500)});
+ if(!last)return;const {I,r,rows}=last,b=this;
+ const t="SBR settings — "+I.C4+" PE, "+I.C5+" people\nAir "+r.C76+" on / "+r.C77+" off\nSugar "+fmt(r.C70,0)+" mL"+(r.C71>0?" + "+fmt(r.C71,0)+" mL staged":"")+
+  "\nMix "+fmt(r.H4,0)+" / aerate "+fmt(r.C73,0)+" / settle "+fmt(r.C55,0)+" / extract "+fmt(r.C46,0)+" = "+fmt(r.C79,0)+" min\nStatus: "+r.C91+"\nNext step: "+r.C82+"\n\n"+
+  rows.map(x=>x[0]+": "+x[1]).join("\n");
+ copyText(t).then(ok=>{b.textContent=ok?"Copied":"Copy failed";setTimeout(()=>b.textContent="Copy results",1500)});
 });
 $("reset").addEventListener("click",function(){
- if(!this.dataset.c){this.dataset.c=1;this.textContent="Tap again to reset";var b=this;setTimeout(function(){delete b.dataset.c;b.textContent="Reset to defaults"},2500);return}
- state={};try{localStorage.removeItem(KEY)}catch(e){}location.reload();
+ if(!this.dataset.c){this.dataset.c=1;this.textContent="Tap again to clear";setTimeout(()=>{delete this.dataset.c;this.textContent="Clear all readings"},2500);return}
+ const keep={};Object.keys(state).forEach(k=>{if(!USER.includes(k))keep[k]=state[k]});state=keep;
+ try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}location.reload();
 });
-})();
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
 </script>
-<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(function(){})}</script>
 </body>
 </html>
