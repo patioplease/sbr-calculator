@@ -575,15 +575,70 @@ function engineerText(){
   "Status: "+v[1]+" — "+r.C91+"\n"+
   "Next step: "+r.C82;
 }
-$("send").addEventListener("click",()=>{
+/* settings card picture for the engineer */
+function cardCanvas(){
+ const {I,r,v}=last,n=siteKey(siteName())||siteName(),date=fdate($("vdate").value||today());
+ const K=3,W=360,P=18,cv=document.createElement("canvas"),x=cv.getContext("2d");
+ const F='system-ui,-apple-system,"Segoe UI",Roboto,sans-serif';
+ const col={bg:"#ffffff",ink:"#14212b",mut:"#5c6c78",line:"#dbe4ea",acc:"#0e7cc3",accs:"#e6f3fb"};
+ const sc={"s-ok":["#e4f4ea","#1e7a46"],"s-warn":["#fdf0dc","#9a5600"],"s-bad":["#fbe5e3","#b3261e"]}[v[0]];
+ const font=(sz,w)=>x.font=(w||400)+" "+sz+"px "+F;
+ const wrap=(t,w,sz,wt)=>{font(sz,wt);const out=[];let line="";String(t).split(/\s+/).forEach(wd=>{const tt=line?line+" "+wd:wd;if(x.measureText(tt).width>w&&line){out.push(line);line=wd}else line=tt});if(line)out.push(line);return out};
+ const rr=(X,Y,w,h,rad,fill,stroke)=>{x.beginPath();x.roundRect(X,Y,w,h,rad);if(fill){x.fillStyle=fill;x.fill()}if(stroke){x.strokeStyle=stroke;x.lineWidth=1;x.stroke()}};
+ const txt=(t,X,Y,sz,wt,c,al)=>{font(sz,wt);x.fillStyle=c;x.textAlign=al||"left";x.textBaseline="alphabetic";x.fillText(t,X,Y)};
+ const IW=W-2*P,stLines=wrap(r.C91,IW-24,12,500),nxLines=wrap(r.C82,IW,14,400);
+ const H=P+40+12+96+10+58+24+(14+22+stLines.length*16+12)+12+18+nxLines.length*19+14+20+P;
+ cv.width=W*K;cv.height=H*K;x.scale(K,K);
+ x.fillStyle=col.bg;x.fillRect(0,0,W,H);
+ let y=P;const logo=document.querySelector("header img");
+ try{x.drawImage(logo,P,y,34,34)}catch(e){}
+ txt("SBR settings",P+44,y+15,17,700,col.ink);
+ font(12.5,400);let nm=n;const tail=" · "+date;while(nm.length>1&&x.measureText(nm+tail).width>IW-44)nm=nm.slice(0,-1);if(nm!==n)nm=nm.trimEnd()+"…";txt(nm+tail,P+44,y+32,12.5,400,col.mut);
+ y+=40;x.fillStyle=col.acc;x.fillRect(P,y,IW,2);y+=12;
+ const bw=(IW-10)/2;
+ [[0,"Air"],[1,"Sugar"]].forEach(([i,l])=>{
+  const X=P+i*(bw+10);rr(X,y,bw,96,11,col.accs);txt(l,X+12,y+22,12.5,400,col.mut);
+  let cx=X+12;const big=(s)=>{font(30,700);x.fillStyle=col.ink;x.textAlign="left";x.fillText(s,cx,y+60);cx+=x.measureText(s).width};
+  const small=(s)=>{font(14,600);x.fillStyle=col.mut;x.textAlign="left";x.fillText(s,cx,y+60);cx+=x.measureText(s).width};
+  if(i===0){big(String(r.C76));small(" on ");big("/ "+r.C77);small(" off");txt("minutes, every "+(r.C76+r.C77)+" min",X+12,y+82,12,400,col.mut)}
+  else{big(fmt(r.C70,0));small(" mL");txt(r.C71>0?"then + "+fmt(r.C71,0)+" mL staged":"as the air stops",X+12,y+82,12,400,col.mut)}
+ });
+ y+=96+10;const pw=(IW-18)/4;
+ [[r.H4,"Mix"],[r.C73,"Aerate"],[r.C55,"Settle"],[r.C46,"Extract"]].forEach(([vv,l],i)=>{
+  const X=P+i*(pw+6);rr(X+.5,y+.5,pw-1,57,9,null,col.line);txt(fmt(vv,0),X+pw/2,y+27,19,700,col.ink,"center");txt(l,X+pw/2,y+46,11.5,400,col.mut,"center");
+ });
+ y+=58;txt("Total cycle "+fmt(r.C79,0)+" min",P+IW,y+17,12.5,400,col.mut,"right");y+=24;
+ const sh=14+22+stLines.length*16+12;rr(P,y,IW,sh,11,sc[0]);
+ txt(v[1],P+12,y+28,15.5,700,sc[1]);stLines.forEach((l,i)=>txt(l,P+12,y+48+i*16,12,500,sc[1]));
+ y+=sh+12;txt("Next step",P,y+13,12.5,600,col.mut);y+=18;
+ nxLines.forEach((l,i)=>txt(l,P,y+15+i*19,14,400,col.ink));y+=nxLines.length*19+14;
+ x.fillStyle=col.line;x.fillRect(P,y,IW,1);
+ txt(I.C4+" PE · "+I.C5+(I.C5==1?" person":" people")+" · NRC SBR Calculator",P,y+15,11,400,col.mut);
+ return cv;
+}
+const cardBlob=()=>new Promise(res=>cardCanvas().toBlob(b=>res(b),"image/png"));
+$("send").addEventListener("click",async()=>{
  if(!last)return;const note=$("savenote");
  if(!siteName()){note.className="note";note.style.color="var(--bad)";note.textContent="Enter the site name at the top first.";$("site").scrollIntoView({block:"center"});$("site").focus();return}
- note.style.color="";const t=engineerText(),subj="SBR settings — "+(siteKey(siteName())||siteName());
+ note.style.color="";note.className="note ok";
+ const t=engineerText(),sn=siteKey(siteName())||siteName(),subj="SBR settings — "+sn;
+ const fname="SBR settings - "+sn.replace(/[\\/:*?"<>|]/g,"")+".png";
  const mobile=(navigator.userAgentData&&navigator.userAgentData.mobile)||/Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent);
- if(mobile&&navigator.share){navigator.share({title:subj,text:t}).catch(()=>{});return}
- if(!mobile){location.href="mailto:?subject="+encodeURIComponent(subj)+"&body="+encodeURIComponent(t);
-  copyText(t).then(ok=>{note.className="note ok";note.textContent="Opening your email app"+(ok?" (also copied, in case it doesn't open).":".")});return}
- copyText(t).then(ok=>{note.className="note ok";note.textContent=ok?"Copied — paste it into a message to the engineer.":"Couldn't copy on this device."});
+ if(mobile&&navigator.share){
+  let data={title:subj,text:t};
+  try{const b=await cardBlob();const f=new File([b],fname,{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[f]}))data.files=[f]}catch(e){}
+  navigator.share(data).catch(err=>{if(err&&err.name!=="AbortError"&&data.files){delete data.files;navigator.share(data).catch(()=>{})}});
+  return;
+ }
+ if(!mobile){
+  let imgOk=false;
+  try{if(window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write){await navigator.clipboard.write([new ClipboardItem({"image/png":cardBlob()})]);imgOk=true}}catch(e){}
+  if(!imgOk){try{const b=await cardBlob(),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=fname;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}catch(e){}}
+  location.href="mailto:?subject="+encodeURIComponent(subj)+"&body="+encodeURIComponent(t+"\n\n");
+  note.textContent=imgOk?"Opening your email — the settings picture is copied, paste it in with Ctrl+V.":"Opening your email — the settings picture was saved to Downloads, attach it to the email.";
+  return;
+ }
+ copyText(t).then(ok=>{note.textContent=ok?"Copied — paste it into a message to the engineer.":"Couldn't copy on this device."});
 });
 function copyText(t){
  const fb=()=>{const a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand("copy")}catch(e){}a.remove();return ok};
