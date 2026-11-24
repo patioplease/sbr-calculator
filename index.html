@@ -637,8 +637,9 @@ function engLabel(){const e=eng();return e.name||"engineer"}
 function drawSendButtons(){
  const e=eng(),has=!!(e.email||e.phone);
  $("send").textContent="Send to "+engLabel();
- $("sharepic").hidden=!(has&&isMobile());
- $("engnote").textContent=has?("Send goes to "+(e.name||"the engineer")+" by "+(isMobile()?(e.phone?"WhatsApp":"email"):(e.email?"email":"WhatsApp"))+"."):"No contact saved — Send opens your share list.";
+ $("sharepic").hidden=isMobile()?!has:!canShareFiles();
+ $("engnote").textContent=isMobile()?(has?"Send goes to "+(e.name||"the engineer")+" by "+(e.phone?"WhatsApp":"email")+".":"No contact saved — Send opens your share list."):
+  (e.email||!e.phone?"On a PC, Send makes an email"+(e.email?" to "+(e.name||"the engineer"):"")+" with the picture already in it.":"Send goes to "+(e.name||"the engineer")+" by WhatsApp.");
 }
 [["engName","eng-name"],["engEmail","eng-email"],["engPhone","eng-phone"]].forEach(([k,id])=>{
  $(id).value=state[k]||"";$(id).addEventListener("input",()=>{state[k]=$(id).value;save();drawSendButtons()});
@@ -663,6 +664,27 @@ async function pictureToClipboard(c){
 }
 const mailto=(to,c)=>"mailto:"+encodeURIComponent(to||"").replace(/%40/g,"@")+"?subject="+encodeURIComponent(c.subj)+"&body="+encodeURIComponent(c.t+"\n\n");
 const waLink=(num,c)=>"https://wa.me/"+waNumber(num)+"?text="+encodeURIComponent(c.t);
+/* PC: ready-to-send email draft (.eml) with the picture inside — opens in Outlook / Windows Mail */
+const b64utf8=s=>{const by=new TextEncoder().encode(s);let bin="";for(let i=0;i<by.length;i+=8192)bin+=String.fromCharCode.apply(null,by.subarray(i,i+8192));return btoa(bin)};
+const wrap76=s=>s.replace(/(.{76})/g,"$1\r\n");
+const blobB64=b=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(",")[1]);r.onerror=no;r.readAsDataURL(b)});
+async function buildEml(to,c,png){
+ const R="sbr_rel_"+Date.now(),A="sbr_alt_"+Date.now(),img=await blobB64(png);
+ const html='<html><body style="font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#14212b">'+
+  c.t.split("\n").map(l=>esc(l)).join("<br>")+'<br><br><img src="cid:sbrcard" alt="SBR settings" width="360" style="width:360px;max-width:100%;border:1px solid #dbe4ea;border-radius:8px"></body></html>';
+ const H=[];
+ if(to)H.push("To: "+to.replace(/[\r\n]/g,""));
+ H.push("Subject: =?UTF-8?B?"+b64utf8(c.subj)+"?=","X-Unsent: 1","MIME-Version: 1.0",'Content-Type: multipart/related; boundary="'+R+'"; type="multipart/alternative"');
+ return H.join("\r\n")+"\r\n\r\n"+
+  "--"+R+"\r\nContent-Type: multipart/alternative; boundary=\""+A+"\"\r\n\r\n"+
+  "--"+A+"\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n"+wrap76(b64utf8(c.t))+"\r\n"+
+  "--"+A+"\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n"+wrap76(b64utf8(html))+"\r\n"+
+  "--"+A+"--\r\n"+
+  "--"+R+"\r\nContent-Type: image/png; name=\""+c.fname+"\"\r\nContent-Transfer-Encoding: base64\r\nContent-ID: <sbrcard>\r\nContent-Disposition: inline; filename=\""+c.fname+"\"\r\n\r\n"+wrap76(img)+"\r\n"+
+  "--"+R+"--\r\n";
+}
+function download(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),10000)}
+let _cf=null;const canShareFiles=()=>{if(_cf===null){try{_cf=!!(navigator.share&&navigator.canShare&&navigator.canShare({files:[new File(["x"],"x.png",{type:"image/png"})]}))}catch(e){_cf=false}}return _cf};
 $("send").addEventListener("click",async()=>{
  const c=ready();if(!c)return;const e=eng(),who=e.name||"the engineer";
  if(isMobile()){
@@ -671,10 +693,15 @@ $("send").addEventListener("click",async()=>{
   if(navigator.share){shareWithPicture(c);return}
   copyText(c.t).then(ok=>{c.note.textContent=ok?"Copied — paste it into a message to the engineer.":"Couldn't copy on this device."});return;
  }
- const pic=await pictureToClipboard(c);
- const tip=pic==="copied"?" The settings picture is copied — paste it in with Ctrl+V.":pic==="saved"?" The settings picture was saved to Downloads — attach it.":"";
- if(!e.email&&e.phone){window.open(waLink(e.phone,c),"_blank");c.note.textContent="Opening WhatsApp to "+who+"."+tip;return}
- location.href=mailto(e.email,c);c.note.textContent="Opening email"+(e.email?" to "+who:"")+"."+tip;
+ if(!e.email&&e.phone){
+  const pic=await pictureToClipboard(c);
+  window.open(waLink(e.phone,c),"_blank");
+  c.note.textContent="Opening WhatsApp to "+who+"."+(pic==="copied"?" The settings picture is copied — paste it into the chat with Ctrl+V.":pic==="saved"?" The settings picture was saved to Downloads — attach it.":"");return}
+ try{
+  const png=await cardBlob(),eml=await buildEml(e.email,c,png);
+  download(new Blob([eml],{type:"message/rfc822"}),c.fname.replace(/\.png$/,".eml"));
+  c.note.textContent="Email ready — open “"+c.fname.replace(/\.png$/,".eml")+"” from your downloads (top right in Chrome). It opens in Outlook or Mail"+(e.email?", addressed to "+who:"")+", with the picture in it — just press Send."+(canShareFiles()?" Using a different email app? Use Share with picture.":"");
+ }catch(err){location.href=mailto(e.email,c);c.note.textContent="Opening email"+(e.email?" to "+who:"")+".";}
 });
 $("sharepic").addEventListener("click",()=>{const c=ready();if(!c)return;if(navigator.share)shareWithPicture(c);});
 
