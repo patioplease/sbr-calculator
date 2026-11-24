@@ -74,6 +74,7 @@ details.card[open]>summary{margin-bottom:8px}
 .btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 button{font:inherit}
 .btns button,.btn{flex:1;font-weight:600;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-height:44px}
+.btns button:disabled{opacity:.5}
 .btns button.p,.btn.p{background:var(--acc);border-color:var(--acc);color:#fff}
 @media (prefers-color-scheme:dark){.btns button.p,.btn.p{color:#06202f}}
 .trial{background:var(--accs);border-radius:11px;padding:10px 12px;margin-top:8px}
@@ -143,7 +144,7 @@ button{font:inherit}
     <div class="total" id="tot"></div>
     <div class="status" id="status"><b></b><span></span></div>
     <div class="next"><b>Next step</b><span id="action"></span></div>
-    <div class="btns"><button class="p" id="send" style="flex-basis:100%">Send to engineer</button><button id="save">Save visit</button><button id="repbtn">Report</button><button id="copy">Copy</button></div>
+    <div class="btns"><button class="p" id="send" style="flex-basis:100%">Send to engineer</button><button id="sharepic" style="flex-basis:100%" hidden>Share with picture</button><button id="save">Save visit</button><button id="repbtn">Report</button><button id="copy">Copy</button></div>
     <div class="note" id="savenote"></div>
   </div>
 </section>
@@ -158,6 +159,18 @@ button{font:inherit}
     <div class="note" id="tres">Enter all three to work out the rate.</div>
     <div class="btns"><button class="p" id="tuse" disabled>Use this rate</button></div>
   </div>
+</details>
+<details class="card"><summary>Engineer contact</summary>
+  <div class="f wide first"><label for="eng-name">Name</label><input id="eng-name" autocomplete="off" style="text-align:left" placeholder="e.g. Dave"></div>
+  <div class="f wide"><label for="eng-email">Email</label><input id="eng-email" type="email" autocomplete="off" style="text-align:left"></div>
+  <div class="f wide"><label for="eng-phone">WhatsApp number</label><input id="eng-phone" type="tel" autocomplete="off" style="text-align:left" placeholder="07…"></div>
+  <div class="note" id="engnote"></div>
+</details>
+<details class="card"><summary id="savedsum">Saved visits</summary>
+  <div class="note" id="savedinfo" style="margin-top:0"></div>
+  <div class="btns"><button id="expbtn">Export</button><button id="impbtn">Import</button></div>
+  <input type="file" id="impfile" accept=".csv,text/csv" hidden>
+  <div class="note" id="impnote"></div>
 </details>
 <details class="card"><summary>Advanced settings</summary><div id="g-adv"></div></details>
 
@@ -514,7 +527,7 @@ $("history").addEventListener("click",e=>{
  const b=e.target.closest("button[data-d]");if(!b)return;
  if(!b.dataset.c){b.dataset.c=1;b.textContent="Delete?";b.style.fontSize="13px";b.style.color="var(--bad)";return}
  const key=siteKey(siteName());sites[key]=sites[key].filter(v=>v.date!==b.dataset.d);if(!sites[key].length)delete sites[key];
- store(SKEY,sites);refreshSites();drawHistory();
+ store(SKEY,sites);refreshSites();drawHistory();drawSaved();
 });
 $("save").addEventListener("click",()=>{
  const n=siteName();if(!n){$("savenote").textContent="Enter a site name at the top first.";$("site").focus();return}
@@ -522,7 +535,7 @@ $("save").addEventListener("click",()=>{
  const date=$("vdate").value||today(),key=siteKey(n)||n,I={};USER.forEach(k=>I[k]=val(k));
  const rec={date,I,on:last.r.C76,off:last.r.C77,sugar:last.r.C70,extra:last.r.C71,status:last.r.C91};
  sites[key]=(sites[key]||[]).filter(v=>v.date!==date);sites[key].push(rec);
- const ok=store(SKEY,sites);refreshSites();drawHistory();
+ const ok=store(SKEY,sites);refreshSites();drawHistory();drawSaved();
  $("savenote").className="note ok";$("savenote").textContent=ok?"Saved to "+key+" for "+fdate(date)+".":"Couldn't save on this phone.";
 });
 
@@ -616,29 +629,99 @@ function cardCanvas(){
  txt(I.C4+" PE · "+I.C5+(I.C5==1?" person":" people")+" · NRC SBR Calculator",P,y+15,11,400,col.mut);
  return cv;
 }
+/* ---------- engineer contact + sending ---------- */
+const isMobile=()=>(navigator.userAgentData&&navigator.userAgentData.mobile)||/Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent);
+const eng=()=>({name:(state.engName||"").trim(),email:(state.engEmail||"").trim(),phone:(state.engPhone||"").trim()});
+function waNumber(p){let d=String(p).replace(/[^\d+]/g,"");if(d.startsWith("+"))return d.slice(1);if(d.startsWith("00"))return d.slice(2);if(d.startsWith("0"))return "44"+d.slice(1);return d}
+function engLabel(){const e=eng();return e.name||"engineer"}
+function drawSendButtons(){
+ const e=eng(),has=!!(e.email||e.phone);
+ $("send").textContent="Send to "+engLabel();
+ $("sharepic").hidden=!(has&&isMobile());
+ $("engnote").textContent=has?("Send goes to "+(e.name||"the engineer")+" by "+(isMobile()?(e.phone?"WhatsApp":"email"):(e.email?"email":"WhatsApp"))+"."):"No contact saved — Send opens your share list.";
+}
+[["engName","eng-name"],["engEmail","eng-email"],["engPhone","eng-phone"]].forEach(([k,id])=>{
+ $(id).value=state[k]||"";$(id).addEventListener("input",()=>{state[k]=$(id).value;save();drawSendButtons()});
+});
 const cardBlob=()=>new Promise(res=>cardCanvas().toBlob(b=>res(b),"image/png"));
-$("send").addEventListener("click",async()=>{
- if(!last)return;const note=$("savenote");
- if(!siteName()){note.className="note";note.style.color="var(--bad)";note.textContent="Enter the site name at the top first.";$("site").scrollIntoView({block:"center"});$("site").focus();return}
+function ready(){
+ const note=$("savenote");if(!last)return null;
+ if(!siteName()){note.className="note";note.style.color="var(--bad)";note.textContent="Enter the site name at the top first.";$("site").scrollIntoView({block:"center"});$("site").focus();return null}
  note.style.color="";note.className="note ok";
- const t=engineerText(),sn=siteKey(siteName())||siteName(),subj="SBR settings — "+sn;
- const fname="SBR settings - "+sn.replace(/[\\/:*?"<>|]/g,"")+".png";
- const mobile=(navigator.userAgentData&&navigator.userAgentData.mobile)||/Android|iPhone|iPad|iPod|Mobi/i.test(navigator.userAgent);
- if(mobile&&navigator.share){
-  let data={title:subj,text:t};
-  try{const b=await cardBlob();const f=new File([b],fname,{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[f]}))data.files=[f]}catch(e){}
-  navigator.share(data).catch(err=>{if(err&&err.name!=="AbortError"&&data.files){delete data.files;navigator.share(data).catch(()=>{})}});
-  return;
+ const sn=siteKey(siteName())||siteName();
+ return {note,t:engineerText(),subj:"SBR settings — "+sn,fname:"SBR settings - "+sn.replace(/[\\/:*?"<>|]/g,"")+".png"};
+}
+async function shareWithPicture(c){
+ let data={title:c.subj,text:c.t};
+ try{const b=await cardBlob(),f=new File([b],c.fname,{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[f]}))data.files=[f]}catch(e){}
+ navigator.share(data).catch(err=>{if(err&&err.name!=="AbortError"&&data.files){delete data.files;navigator.share(data).catch(()=>{})}});
+}
+async function pictureToClipboard(c){
+ try{if(window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write){await navigator.clipboard.write([new ClipboardItem({"image/png":cardBlob()})]);return "copied"}}catch(e){}
+ try{const b=await cardBlob(),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=c.fname;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);return "saved"}catch(e){}
+ return "";
+}
+const mailto=(to,c)=>"mailto:"+encodeURIComponent(to||"").replace(/%40/g,"@")+"?subject="+encodeURIComponent(c.subj)+"&body="+encodeURIComponent(c.t+"\n\n");
+const waLink=(num,c)=>"https://wa.me/"+waNumber(num)+"?text="+encodeURIComponent(c.t);
+$("send").addEventListener("click",async()=>{
+ const c=ready();if(!c)return;const e=eng(),who=e.name||"the engineer";
+ if(isMobile()){
+  if(e.phone){window.open(waLink(e.phone,c),"_blank");c.note.textContent="Opening WhatsApp to "+who+". To include the picture, use Share with picture.";return}
+  if(e.email){location.href=mailto(e.email,c);c.note.textContent="Opening email to "+who+". To include the picture, use Share with picture.";return}
+  if(navigator.share){shareWithPicture(c);return}
+  copyText(c.t).then(ok=>{c.note.textContent=ok?"Copied — paste it into a message to the engineer.":"Couldn't copy on this device."});return;
  }
- if(!mobile){
-  let imgOk=false;
-  try{if(window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write){await navigator.clipboard.write([new ClipboardItem({"image/png":cardBlob()})]);imgOk=true}}catch(e){}
-  if(!imgOk){try{const b=await cardBlob(),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=fname;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}catch(e){}}
-  location.href="mailto:?subject="+encodeURIComponent(subj)+"&body="+encodeURIComponent(t+"\n\n");
-  note.textContent=imgOk?"Opening your email — the settings picture is copied, paste it in with Ctrl+V.":"Opening your email — the settings picture was saved to Downloads, attach it to the email.";
-  return;
- }
- copyText(t).then(ok=>{note.textContent=ok?"Copied — paste it into a message to the engineer.":"Couldn't copy on this device."});
+ const pic=await pictureToClipboard(c);
+ const tip=pic==="copied"?" The settings picture is copied — paste it in with Ctrl+V.":pic==="saved"?" The settings picture was saved to Downloads — attach it.":"";
+ if(!e.email&&e.phone){window.open(waLink(e.phone,c),"_blank");c.note.textContent="Opening WhatsApp to "+who+"."+tip;return}
+ location.href=mailto(e.email,c);c.note.textContent="Opening email"+(e.email?" to "+who:"")+"."+tip;
+});
+$("sharepic").addEventListener("click",()=>{const c=ready();if(!c)return;if(navigator.share)shareWithPicture(c);});
+
+/* ---------- export / import saved visits ---------- */
+const COLS=[["Site","site"],["Visit date","date"],["Tank PE","C4"],["People","C5"],["Compressor flow L/min","C6"],["Survey sludge depth mm","C7"],["Previous survey depth mm","C9"],["Days between surveys","C11"],["Sludge colour","C12"],["TP mg/L","C13"],["Nitrate-N mg/L","C14"],["Nitrite-N mg/L","C15"],["Ammonia-N mg/L","C16"],["DO before sugar mg/L","C17"],["Lowest DO after sugar mg/L","C18"],["DO end of mixing mg/L","C19"],["Days since desludging","C20"],["pH","C21"],["Temperature C","C22"],["High-TP tests in a row","C23"],["Denitrification rate mg/L N/h","C24"],["Air on min","on"],["Air off min","off"],["Sugar mL","sugar"],["Staged sugar mL","extra"],["Status","status"]];
+const csvCell=v=>{if(v===null||v===undefined)return "";const s=String(v);return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+function allVisits(){const out=[];Object.keys(sites).sort().forEach(k=>(sites[k]||[]).slice().sort((a,b)=>a.date<b.date?-1:1).forEach(v=>out.push([k,v])));return out}
+function drawSaved(){const n=allVisits().length,m=Object.keys(sites).length;$("savedsum").textContent="Saved visits ("+n+")";$("savedinfo").textContent=n?n+" visit"+(n>1?"s":"")+" across "+m+" site"+(m>1?"s":"")+" on this phone. Export saves a spreadsheet that opens in Excel.":"No visits saved on this phone yet.";$("expbtn").disabled=!n}
+$("expbtn").addEventListener("click",async()=>{
+ const rows=[COLS.map(c=>c[0]).join(",")].concat(allVisits().map(([k,v])=>COLS.map(([h,key])=>csvCell(key==="site"?k:key==="date"?v.date:(key in v&&!/^C\d+$/.test(key))?v[key]:(v.I||{})[key])).join(",")));
+ const blob=new Blob(["﻿"+rows.join("\r\n")],{type:"text/csv"}),fname="SBR visits "+today()+".csv";
+ const f=new File([blob],fname,{type:"text/csv"});
+ if(isMobile()&&navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],title:fname}).catch(()=>{});$("impnote").textContent="";return}
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=fname;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+ $("impnote").className="note ok";$("impnote").textContent="Saved "+fname+" to Downloads. It opens in Excel.";
+});
+function parseCSV(t){const rows=[];let row=[],cell="",q=false;t=t.replace(/^﻿/,"");
+ for(let i=0;i<t.length;i++){const ch=t[i];
+  if(q){if(ch==='"'){if(t[i+1]==='"'){cell+='"';i++}else q=false}else cell+=ch}
+  else if(ch==='"')q=true;else if(ch===","){row.push(cell);cell=""}
+  else if(ch==="\n"||ch==="\r"){if(ch==="\r"&&t[i+1]==="\n")i++;row.push(cell);rows.push(row);row=[];cell=""}
+  else cell+=ch}
+ if(cell!==""||row.length){row.push(cell);rows.push(row)}
+ return rows.filter(r=>r.some(c=>c.trim()!==""));}
+function normDate(s){s=String(s).trim();let m;
+ if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+ if(m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/)){const y=m[3].length===2?"20"+m[3]:m[3];return y+"-"+m[2].padStart(2,"0")+"-"+m[1].padStart(2,"0")}
+ const d=new Date(s);return isNaN(d)?null:d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+$("impbtn").addEventListener("click",()=>$("impfile").click());
+$("impfile").addEventListener("change",async()=>{
+ const file=$("impfile").files[0];if(!file)return;const note=$("impnote");note.className="note";note.style.color="";
+ try{
+  const rows=parseCSV(await file.text()),head=rows.shift().map(h=>h.trim().toLowerCase()),idx={};
+  COLS.forEach(([h,k])=>{const i=head.indexOf(h.toLowerCase());if(i>=0)idx[k]=i});
+  if(!("site" in idx)||!("date" in idx))throw new Error("This doesn't look like an SBR visits file (no Site / Visit date columns).");
+  let added=0,skipped=0;
+  rows.forEach(r=>{
+   const site=(r[idx.site]||"").trim(),date=normDate(r[idx.date]||"");if(!site||!date){skipped++;return}
+   const I={};USER.forEach(k=>{if(k in idx){const s=(r[idx[k]]||"").trim();I[k]=s===""?null:(k==="C12"?s:(isFinite(Number(s))?Number(s):null))}else I[k]=null});
+   const num=k=>{const s=k in idx?(r[idx[k]]||"").trim():"";return s===""||!isFinite(Number(s))?null:Number(s)};
+   const rec={date,I,on:num("on"),off:num("off"),sugar:num("sugar"),extra:num("extra"),status:"status" in idx?r[idx.status]:""};
+   const key=siteKey(site)||site;sites[key]=(sites[key]||[]).filter(v=>v.date!==date);sites[key].push(rec);added++;
+  });
+  store(SKEY,sites);refreshSites();drawHistory();drawSaved();
+  note.className="note ok";note.textContent="Imported "+added+" visit"+(added===1?"":"s")+(skipped?" ("+skipped+" rows skipped — missing site or date)":"")+".";
+ }catch(err){note.style.color="var(--bad)";note.textContent=err.message||"Couldn't read that file.";}
+ $("impfile").value="";
 });
 function copyText(t){
  const fb=()=>{const a=document.createElement("textarea");a.value=t;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand("copy")}catch(e){}a.remove();return ok};
@@ -653,7 +736,7 @@ $("reset").addEventListener("click",function(){
 });
 
 /* ---------- init ---------- */
-refreshSites();
+refreshSites();drawSaved();drawSendButtons();
 $("site").value=state.site||"";$("vdate").value=state.vdate||today();
 if(siteName())onSite(false);
 run();
